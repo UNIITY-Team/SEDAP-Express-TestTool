@@ -153,7 +153,7 @@ public class SEDAPExpressTool extends Application implements SEDAPExpressSubscri
     private TextField tcpClientPortTextField;
 
     @FXML
-    private ComboBox<NetworkInterface> tcpInterfaceComboBox;
+    private ComboBox<Object> tcpInterfaceComboBox;
 
     @FXML
     private TextField tcpPortTextField;
@@ -342,36 +342,48 @@ public class SEDAPExpressTool extends Application implements SEDAPExpressSubscri
 	// Network Interfaces
 	this.tcpInterfaceComboBox.setItems(FXCollections.observableArrayList());
 	this.tcpInterfaceComboBox.setButtonCell(new ListCell<>() {
-	    protected void updateItem(NetworkInterface item, boolean empty) {
+	    protected void updateItem(Object item, boolean empty) {
 		super.updateItem(item, empty);
 		if (item == null || empty) {
 		    setGraphic(null);
 		} else {
-		    final StringBuilder ips = new StringBuilder();
-		    item.getInetAddresses().asIterator().forEachRemaining(ip -> ips.append("," + ip.toString()));
-		    setText(ips.toString().substring(2) + " (" + item.getDisplayName() + ")");
+
+		    if (item instanceof NetworkInterface intf) {
+			final StringBuilder ips = new StringBuilder();
+			intf.getInetAddresses().asIterator().forEachRemaining(ip -> ips.append("," + ip.toString()));
+			setText(ips.toString().substring(2) + " (" + intf.getDisplayName() + ")");
+		    } else if (item instanceof String str) {
+			setText(str);
+		    }
 		}
 	    }
 	});
-	this.tcpInterfaceComboBox.setCellFactory(new Callback<ListView<NetworkInterface>, ListCell<NetworkInterface>>() {
+	this.tcpInterfaceComboBox.setCellFactory(new Callback<ListView<Object>, ListCell<Object>>() {
 	    @Override
-	    public ListCell<NetworkInterface> call(ListView<NetworkInterface> l) {
-		return new ListCell<NetworkInterface>() {
+	    public ListCell<Object> call(ListView<Object> l) {
+		return new ListCell<Object>() {
 		    @Override
-		    protected void updateItem(NetworkInterface item, boolean empty) {
+		    protected void updateItem(Object item, boolean empty) {
+
 			super.updateItem(item, empty);
+
 			if (item == null || empty) {
 			    setGraphic(null);
 			} else {
-			    final StringBuilder ips = new StringBuilder();
-			    item.getInetAddresses().asIterator().forEachRemaining(ip -> ips.append("," + ip.toString().substring(1)));
-			    setText(ips.toString().substring(1) + " (" + item.getDisplayName() + ")");
+			    if (item instanceof NetworkInterface intf) {
+				final StringBuilder ips = new StringBuilder();
+				intf.getInetAddresses().asIterator().forEachRemaining(ip -> ips.append("," + ip.toString().substring(1)));
+				setText(ips.toString().substring(1) + " (" + intf.getDisplayName() + ")");
+			    } else if (item instanceof String str) {
+				setText(str);
+			    }
 			}
 		    }
 		};
 	    }
 	});
 
+	this.tcpInterfaceComboBox.getItems().add("All interfaces");
 	try {
 
 	    final Enumeration<NetworkInterface> enumInterf = NetworkInterface.getNetworkInterfaces();
@@ -387,9 +399,7 @@ public class SEDAPExpressTool extends Application implements SEDAPExpressSubscri
 
 	}
 
-	if (this.tcpInterfaceComboBox.getItems().size() >= 1) {
-	    this.tcpInterfaceComboBox.getSelectionModel().select(0);
-	}
+	this.tcpInterfaceComboBox.getSelectionModel().select(0);
 
 	// World Wind Initalisation
 	WorldWind.getNetworkStatus().setOfflineMode(true);
@@ -573,7 +583,12 @@ public class SEDAPExpressTool extends Application implements SEDAPExpressSubscri
     @FXML
     void tcpConnect(ActionEvent event) {
 
-	this.communicator = new SEDAPExpressTCPServer(this.tcpInterfaceComboBox.getSelectionModel().getSelectedItem().getInetAddresses().nextElement().getHostAddress(), Integer.parseInt(this.tcpClientPortTextField.getText()));
+	if (this.tcpInterfaceComboBox.getSelectionModel().getSelectedItem() instanceof NetworkInterface intf) {
+	    this.communicator = new SEDAPExpressTCPServer(intf.getInetAddresses().nextElement().getHostAddress(), Integer.parseInt(this.tcpClientPortTextField.getText()));
+	} else {
+	    this.communicator = new SEDAPExpressTCPServer(Integer.parseInt(this.tcpClientPortTextField.getText()));
+	}
+
 	this.communicator.subscribeForInputLogging(this);
 	this.communicator.subscribeForOutputLogging(this);
 

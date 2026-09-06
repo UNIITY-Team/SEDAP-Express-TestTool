@@ -17,5 +17,6 @@ module secmockup {
     requires transitive jogamp.fat;
     requires transitive WorldWindJava;
     requires transitive sedapexpress;
+	requires javafx.base;
 
 }

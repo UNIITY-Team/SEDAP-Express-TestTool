@@ -52,10 +52,12 @@ import de.bundeswehr.uniity.sedapexpress.messages.METEO;
 import de.bundeswehr.uniity.sedapexpress.messages.OWNUNIT;
 import de.bundeswehr.uniity.sedapexpress.messages.RESEND;
 import de.bundeswehr.uniity.sedapexpress.messages.SEDAPExpressMessage;
+import de.bundeswehr.uniity.sedapexpress.messages.SEDAPExpressMessage.DataEncoding;
 import de.bundeswehr.uniity.sedapexpress.messages.SEDAPExpressMessage.DeleteFlag;
 import de.bundeswehr.uniity.sedapexpress.messages.SEDAPExpressMessage.MessageType;
 import de.bundeswehr.uniity.sedapexpress.messages.STATUS;
 import de.bundeswehr.uniity.sedapexpress.messages.TEXT;
+import de.bundeswehr.uniity.sedapexpress.messages.TEXT.TextType;
 import de.bundeswehr.uniity.sedapexpress.messages.TIMESYNC;
 import de.bundeswehr.uniity.sedapexpress.network.SEDAPExpressCommunicator;
 import de.bundeswehr.uniity.sedapexpress.network.SEDAPExpressMQTTClient;
@@ -105,11 +107,13 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
+import javafx.scene.paint.Paint;
+import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import javafx.util.StringConverter;
 
-public class SEDAPExpressTool extends Application
-		implements SEDAPExpressSubscriber, SEDAPExpressInputLoggingSubscriber, SEDAPExpressOutputLoggingSubscriber {
+public class SEDAPExpressTool extends Application implements SEDAPExpressSubscriber, SEDAPExpressInputLoggingSubscriber, SEDAPExpressOutputLoggingSubscriber {
 
 	@FXML
 	private Button activateButton;
@@ -208,10 +212,22 @@ public class SEDAPExpressTool extends Application
 	private TitledPane mqttClientPane;
 
 	@FXML
-	private TableView<?> textLogTableView;
+	private TableView<TEXT> textLogTableView;
 
 	@FXML
-	private TextArea promptTextField;
+	private TextField textSenderTextField;
+
+	@FXML
+	private TextField textRecipientTextField;
+
+	@FXML
+	private TextField textMessageReferenceTextField;
+
+	@FXML
+	private ComboBox<TEXT.TextType> textMessageTypeComboBox;
+
+	@FXML
+	private TextArea textPromptTextField;
 
 	@FXML
 	private SwingNode mapPane;
@@ -260,14 +276,12 @@ public class SEDAPExpressTool extends Application
 	public static final double yardsToMeter = 1d / SEDAPExpressTool.metersToYards;
 	public static final double kiloyardsToMeter = 1d / SEDAPExpressTool.metersToKiloYards;
 
-	public static final double nauticalMilesToYards = SEDAPExpressTool.nauticalMilesToMeter
-			* SEDAPExpressTool.metersToYards;
+	public static final double nauticalMilesToYards = SEDAPExpressTool.nauticalMilesToMeter * SEDAPExpressTool.metersToYards;
 
 	public static final double feetToMeter = 1d / SEDAPExpressTool.metersToYards / 3;
 	public static final double meterToFeet = 1d / SEDAPExpressTool.feetToMeter;
 	public static final double nauticalMilesToDegrees = 1 / 60d;
-	public static final double meterToDegrees = SEDAPExpressTool.meterToNauticalMiles
-			* SEDAPExpressTool.nauticalMilesToDegrees;
+	public static final double meterToDegrees = SEDAPExpressTool.meterToNauticalMiles * SEDAPExpressTool.nauticalMilesToDegrees;
 	public static final double flightLevelToMeter = SEDAPExpressTool.feetToMeter * 100;
 	public static final double meterToFlightLevel = SEDAPExpressTool.meterToFeet / 100;
 
@@ -282,84 +296,50 @@ public class SEDAPExpressTool extends Application
 
 	@FXML
 	void initialize() {
-		assert this.authenticationCheckBox != null
-				: "fx:id=\"authenticationCheckBox\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.contactSimTabPane != null
-				: "fx:id=\"contactSimTabPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.emissionSimTab != null
-				: "fx:id=\"emissionSimTab\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.encryptedCheckBox != null
-				: "fx:id=\"encryptedCheckBox\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.inputLoggingArea != null
-				: "fx:id=\"inputLoggingArea\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.keyExchangeTab != null
-				: "fx:id=\"keyExchangeTab\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.keyTextField != null
-				: "fx:id=\"keyTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.mapPane != null
-				: "fx:id=\"mapPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.messageCreatorTab != null
-				: "fx:id=\"messageCreatorTab\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.mqttCACertTextField != null
-				: "fx:id=\"mqttCACertTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.mqttClientActivateButton != null
-				: "fx:id=\"mqttClientActivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.mqttClientCertTextField != null
-				: "fx:id=\"mqttClientCertTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.mqttClientDeactivateButton1 != null
-				: "fx:id=\"mqttClientDeactivateButton1\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.mqttClientKeyTextField != null
-				: "fx:id=\"mqttClientKeyTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.mqttClientPane != null
-				: "fx:id=\"mqttClientPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.mqttClientURLTextField != null
-				: "fx:id=\"mqttClientURLTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.mqttPasswordTextField != null
-				: "fx:id=\"mqttPasswordTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.mqttUserTextField != null
-				: "fx:id=\"mqttUserTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.outputLoggingArea != null
-				: "fx:id=\"outputLoggingArea\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.ownunitSimTabPane != null
-				: "fx:id=\"ownunitSimTabPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.promptTextField != null
-				: "fx:id=\"promptTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.protobufCheckBox != null
-				: "fx:id=\"protobufCheckBox\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.tcpActivateButton != null
-				: "fx:id=\"tcpActivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.tcpClientActivateButton != null
-				: "fx:id=\"tcpClientActivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.tcpClientDeactivateButton != null
-				: "fx:id=\"tcpClientDeactivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.tcpClientIPTextField != null
-				: "fx:id=\"tcpClientIPTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.tcpClientPane != null
-				: "fx:id=\"tcpClientPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.tcpClientPortTextField != null
-				: "fx:id=\"tcpClientPortTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.tcpDeactivateButton != null
-				: "fx:id=\"tcpDeactivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.tcpInterfaceComboBox != null
-				: "fx:id=\"tcpInterfaceComboBox\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.tcpPane != null
-				: "fx:id=\"tcpPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.tcpPortTextField != null
-				: "fx:id=\"tcpPortTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.textLogTableView != null
-				: "fx:id=\"textLogTableView\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.timeSyncTab != null
-				: "fx:id=\"timeSyncTab\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.udpActivateButton != null
-				: "fx:id=\"udpActivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.udpDeactivateButton != null
-				: "fx:id=\"udpDeactivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.udpIPTextField != null
-				: "fx:id=\"udpIPTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.udpPane != null
-				: "fx:id=\"udpPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
-		assert this.udpPortTextField != null
-				: "fx:id=\"udpPortTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert activateButton != null : "fx:id=\"activateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert authenticationCheckBox != null : "fx:id=\"authenticationCheckBox\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert contactSimTabPane != null : "fx:id=\"contactSimTabPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert emissionSimTab != null : "fx:id=\"emissionSimTab\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert encryptedCheckBox != null : "fx:id=\"encryptedCheckBox\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert inputLoggingArea != null : "fx:id=\"inputLoggingArea\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert keyExchangeTab != null : "fx:id=\"keyExchangeTab\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert keyTextField != null : "fx:id=\"keyTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert mapPane != null : "fx:id=\"mapPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert messageCreatorTab != null : "fx:id=\"messageCreatorTab\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert mqttCACertTextField != null : "fx:id=\"mqttCACertTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert mqttClientActivateButton != null : "fx:id=\"mqttClientActivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert mqttClientCertTextField != null : "fx:id=\"mqttClientCertTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert mqttClientDeactivateButton1 != null : "fx:id=\"mqttClientDeactivateButton1\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert mqttClientKeyTextField != null : "fx:id=\"mqttClientKeyTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert mqttClientPane != null : "fx:id=\"mqttClientPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert mqttClientURLTextField != null : "fx:id=\"mqttClientURLTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert mqttPasswordTextField != null : "fx:id=\"mqttPasswordTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert mqttUserTextField != null : "fx:id=\"mqttUserTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert outputLoggingArea != null : "fx:id=\"outputLoggingArea\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert ownunitSimTabPane != null : "fx:id=\"ownunitSimTabPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert protobufCheckBox != null : "fx:id=\"protobufCheckBox\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert tcpActivateButton != null : "fx:id=\"tcpActivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert tcpClientActivateButton != null : "fx:id=\"tcpClientActivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert tcpClientDeactivateButton != null : "fx:id=\"tcpClientDeactivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert tcpClientIPTextField != null : "fx:id=\"tcpClientIPTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert tcpClientPane != null : "fx:id=\"tcpClientPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert tcpClientPortTextField != null : "fx:id=\"tcpClientPortTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert tcpDeactivateButton != null : "fx:id=\"tcpDeactivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert tcpInterfaceComboBox != null : "fx:id=\"tcpInterfaceComboBox\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert tcpPane != null : "fx:id=\"tcpPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert tcpPortTextField != null : "fx:id=\"tcpPortTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert textLogTableView != null : "fx:id=\"textLogTableView\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert textMessageReferenceTextField != null : "fx:id=\"textMessageReferenceTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert textMessageTypeComboBox != null : "fx:id=\"textMessageTypeComboBox\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert textPromptTextField != null : "fx:id=\"textPromptTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert textRecipientTextField != null : "fx:id=\"textRecipientTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert textSenderTextField != null : "fx:id=\"textSenderTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert timeSyncTab != null : "fx:id=\"timeSyncTab\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert udpActivateButton != null : "fx:id=\"udpActivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert udpDeactivateButton != null : "fx:id=\"udpDeactivateButton\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert udpIPTextField != null : "fx:id=\"udpIPTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert udpPane != null : "fx:id=\"udpPane\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
+		assert udpPortTextField != null : "fx:id=\"udpPortTextField\" was not injected: check your FXML file 'SEDAPExpressTool.fxml'.";
 
 		// TiledPanes
 		this.tcpClientPane.expandedProperty().addListener((a, b, n) -> {
@@ -414,8 +394,7 @@ public class SEDAPExpressTool extends Application
 						} else {
 							if (item instanceof NetworkInterface intf) {
 								final StringBuilder ips = new StringBuilder();
-								intf.getInetAddresses().asIterator()
-										.forEachRemaining(ip -> ips.append("," + ip.toString().substring(1)));
+								intf.getInetAddresses().asIterator().forEachRemaining(ip -> ips.append("," + ip.toString().substring(1)));
 								setText(ips.toString().substring(1) + " (" + intf.getDisplayName() + ")");
 							} else if (item instanceof String str) {
 								setText(str);
@@ -434,8 +413,7 @@ public class SEDAPExpressTool extends Application
 			while (enumInterf.hasMoreElements()) {
 
 				final NetworkInterface networkInterface = enumInterf.nextElement();
-				if (networkInterface.isUp() && networkInterface.supportsMulticast()
-						&& !networkInterface.getInterfaceAddresses().isEmpty()) {
+				if (networkInterface.isUp() && networkInterface.supportsMulticast() && !networkInterface.getInterfaceAddresses().isEmpty()) {
 					this.tcpInterfaceComboBox.getItems().add(networkInterface);
 				}
 			}
@@ -540,8 +518,7 @@ public class SEDAPExpressTool extends Application
 
 			} catch (final IOException e) {
 				e.printStackTrace();
-				System.err.println(
-						"Could not load corresponding FXML file for fragment " + this.getClass().getSimpleName() + "!");
+				System.err.println("Could not load corresponding FXML file for fragment " + this.getClass().getSimpleName() + "!");
 				System.exit(1);
 			}
 
@@ -563,13 +540,63 @@ public class SEDAPExpressTool extends Application
 
 			} catch (final IOException e) {
 				e.printStackTrace();
-				System.err.println(
-						"Could not load corresponding FXML file for fragment " + this.getClass().getSimpleName() + "!");
+				System.err.println("Could not load corresponding FXML file for fragment " + this.getClass().getSimpleName() + "!");
 				System.exit(1);
 			}
 
 		}
 
+		textMessageTypeComboBox.setItems(FXCollections.observableArrayList(TextType.values()));
+		this.textMessageTypeComboBox.getItems().add(TextType.Undefined);
+
+		// 2. StringConverter für die Textanzeige (z.B. im geschlossenen Zustand)
+		textMessageTypeComboBox.setConverter(new StringConverter<TextType>() {
+			@Override
+			public String toString(TextType type) {
+				if (type == null)
+					return "";
+				else
+					return type.name();
+			}
+
+			@Override
+			public TextType fromString(String string) {
+				return null; // Für nicht-editierbare ComboBoxen nicht notwendig
+			}
+		});
+
+		// 3. CellFactory für optisch gestaltete Dropdown-Einträge
+		textMessageTypeComboBox.setCellFactory(_ -> new ListCell<TextType>() {
+			@Override
+			protected void updateItem(TextType item, boolean empty) {
+				super.updateItem(item, empty);
+
+				if (empty || item == null) {
+					setText(null);
+					setGraphic(null);
+				} else {
+					setText(textMessageTypeComboBox.getConverter().toString(item));
+
+					// Farbiger Indikator-Punkt je nach Nachrichtentyp
+					javafx.scene.paint.Color color = switch (item) {
+					case Alert -> javafx.scene.paint.Color.RED;
+					case Warning -> javafx.scene.paint.Color.ORANGE;
+					case Notice -> javafx.scene.paint.Color.BLUE;
+					case Chat -> javafx.scene.paint.Color.GREEN;
+					case Undefined -> javafx.scene.paint.Color.GRAY;
+					};
+					Circle icon = new Circle(5, color);
+					setGraphic(icon);
+				}
+			}
+		});
+
+		// ButtonCell setzen, damit der gewählte Wert im geschlossenen Zustand inkl.
+		// Icon angezeigt wird
+		textMessageTypeComboBox.setButtonCell(textMessageTypeComboBox.getCellFactory().call(null));
+
+		// Standardauswahl festlegen (optional)
+		textMessageTypeComboBox.getSelectionModel().select(TextType.Chat);
 	}
 
 	@FXML
@@ -590,8 +617,7 @@ public class SEDAPExpressTool extends Application
 	@FXML
 	void tcpClientConnect(ActionEvent event) {
 
-		this.communicator = new SEDAPExpressTCPClient(this.tcpClientIPTextField.getText(),
-				Integer.parseInt(this.tcpClientPortTextField.getText()));
+		this.communicator = new SEDAPExpressTCPClient(this.tcpClientIPTextField.getText(), Integer.parseInt(this.tcpClientPortTextField.getText()));
 		this.communicator.subscribeForInputLogging(this);
 		this.communicator.subscribeForOutputLogging(this);
 
@@ -631,8 +657,7 @@ public class SEDAPExpressTool extends Application
 	void tcpConnect(ActionEvent event) {
 
 		if (this.tcpInterfaceComboBox.getSelectionModel().getSelectedItem() instanceof NetworkInterface intf) {
-			this.communicator = new SEDAPExpressTCPServer(intf.getInetAddresses().nextElement().getHostAddress(),
-					Integer.parseInt(this.tcpClientPortTextField.getText()));
+			this.communicator = new SEDAPExpressTCPServer(intf.getInetAddresses().nextElement().getHostAddress(), Integer.parseInt(this.tcpClientPortTextField.getText()));
 		} else {
 			this.communicator = new SEDAPExpressTCPServer(Integer.parseInt(this.tcpClientPortTextField.getText()));
 		}
@@ -675,8 +700,7 @@ public class SEDAPExpressTool extends Application
 	@FXML
 	void udpConnect(ActionEvent event) {
 
-		this.communicator = new SEDAPExpressUDPClient(this.udpIPTextField.getText(),
-				Integer.parseInt(this.udpPortTextField.getText()));
+		this.communicator = new SEDAPExpressUDPClient(this.udpIPTextField.getText(), Integer.parseInt(this.udpPortTextField.getText()));
 		this.communicator.subscribeForInputLogging(this);
 		this.communicator.subscribeForOutputLogging(this);
 
@@ -717,10 +741,8 @@ public class SEDAPExpressTool extends Application
 	void mqttClientConnect(ActionEvent event) {
 
 		try {
-			this.communicator = new SEDAPExpressMQTTClient(this.mqttClientURLTextField.getText(),
-					"SEDAPExpressTestTool", this.mqttUserTextField.getText(), this.mqttPasswordTextField.getText(),
-					this.mqttCACertTextField.getText(), this.mqttClientCertTextField.getText(),
-					this.mqttClientKeyTextField.getText());
+			this.communicator = new SEDAPExpressMQTTClient(this.mqttClientURLTextField.getText(), "SEDAPExpressTestTool", this.mqttUserTextField.getText(), this.mqttPasswordTextField.getText(),
+					this.mqttCACertTextField.getText(), this.mqttClientCertTextField.getText(), this.mqttClientKeyTextField.getText());
 		} catch (FileNotFoundException e) {
 
 			e.printStackTrace();
@@ -762,6 +784,33 @@ public class SEDAPExpressTool extends Application
 		this.udpDeactivateButton.setDisable(true);
 	}
 
+	private byte textCounter = 0;
+
+	@FXML
+	void sendTextMessage(ActionEvent event) {
+
+		final TEXT text = new TEXT();
+		text.setTime(System.currentTimeMillis());
+		text.setAcknowledgement(SEDAPExpressMessage.Acknowledgement.FALSE);
+		text.setClassification(null);
+		text.setEncoding(DataEncoding.BASE64);
+		text.setMAC(null);
+		text.setNumber(this.textCounter++);
+		if (this.textCounter == 0x80) {
+			this.textCounter = 0;
+		}
+		text.setSender(textSenderTextField.getText().trim());
+		text.setRecipient(textRecipientTextField.getText().isEmpty() ? null : textRecipientTextField.getText().trim());
+		text.setType(textMessageTypeComboBox.getSelectionModel().getSelectedItem());
+		text.setReference(textMessageReferenceTextField.getText());
+		text.setTextContent(textPromptTextField.getText());
+
+		sendSEDAPExpressMessage(text);
+
+		textLogTableView.getItems().add(text);
+
+	}
+
 	@Override
 	public void processSEDAPExpressInputLoggingMessage(String message) {
 		this.inputLoggingArea.log(message);
@@ -799,7 +848,8 @@ public class SEDAPExpressTool extends Application
 	}
 
 	/**
-	 * Process internal created messages without logging it as incoming message (already logged as outgoing message)
+	 * Process internal created messages without logging it as incoming message
+	 * (already logged as outgoing message)
 	 * 
 	 * @param message
 	 */
@@ -823,11 +873,9 @@ public class SEDAPExpressTool extends Application
 
 				// Create new symbol with some default attributes
 				if (contact.getSIDC() != null)
-					pp = new MilStd2525TacticalSymbol(String.valueOf(contact.getSIDC()),
-							Position.fromDegrees(0.0, 0.0, 0.0));
+					pp = new MilStd2525TacticalSymbol(String.valueOf(contact.getSIDC()), Position.fromDegrees(0.0, 0.0, 0.0));
 				else
-					pp = new MilStd2525TacticalSymbol(SEDAPExpressTool.standardSIDC,
-							Position.fromDegrees(0.0, 0.0, 0.0));
+					pp = new MilStd2525TacticalSymbol(SEDAPExpressTool.standardSIDC, Position.fromDegrees(0.0, 0.0, 0.0));
 				pp.setAltitudeMode(WorldWind.ABSOLUTE);
 				pp.setShowLocation(false);
 				pp.setShowGraphicModifiers(true);
@@ -855,8 +903,7 @@ public class SEDAPExpressTool extends Application
 			if (contact.getSIDC() != null)
 				pp.setIdentifier(String.valueOf(contact.getSIDC()));
 
-			pp.setModifier(SymbologyConstants.DATE_TIME_GROUP,
-					SEDAPExpressTool.sdf.format(contact.getTime()).toUpperCase());
+			pp.setModifier(SymbologyConstants.DATE_TIME_GROUP, SEDAPExpressTool.sdf.format(contact.getTime()).toUpperCase());
 
 			Position pos;
 			if (contact.getAltitude() != null)
@@ -867,20 +914,16 @@ public class SEDAPExpressTool extends Application
 
 			if ((pos.getLatitude().getDegrees() >= 0) && (pos.getLongitude().getDegrees() >= 0)) {
 				pp.setModifier(SymbologyConstants.HIGHER_FORMATION,
-						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "N"
-								+ (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "E");
+						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "N" + (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "E");
 			} else if ((pos.getLatitude().getDegrees() >= 0) && (pos.getLongitude().getDegrees() < 0)) {
 				pp.setModifier(SymbologyConstants.HIGHER_FORMATION,
-						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "N"
-								+ (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "W");
+						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "N" + (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "W");
 			} else if ((pos.getLatitude().getDegrees() < 0) && (pos.getLongitude().getDegrees() >= 0)) {
 				pp.setModifier(SymbologyConstants.HIGHER_FORMATION,
-						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "S"
-								+ (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "E");
+						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "S" + (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "E");
 			} else {
 				pp.setModifier(SymbologyConstants.HIGHER_FORMATION,
-						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "S"
-								+ (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "W");
+						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "S" + (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "W");
 			}
 
 			if (contact.getAltitude() != null) {
@@ -889,21 +932,17 @@ public class SEDAPExpressTool extends Application
 				} else if (Math.round(pos.getAltitude()) == 0) {
 					pp.setModifier(SymbologyConstants.ALTITUDE_DEPTH, null);
 				} else if (pos.getAltitude() > 500) {
-					pp.setModifier(SymbologyConstants.ALTITUDE_DEPTH,
-							Math.round((pos.getAltitude() / 100d) * SEDAPExpressTool.meterToFeet) + "hft");
+					pp.setModifier(SymbologyConstants.ALTITUDE_DEPTH, Math.round((pos.getAltitude() / 100d) * SEDAPExpressTool.meterToFeet) + "hft");
 				} else {
-					pp.setModifier(SymbologyConstants.ALTITUDE_DEPTH,
-							Math.round(pos.getAltitude() * SEDAPExpressTool.meterToFeet) + "ft");
+					pp.setModifier(SymbologyConstants.ALTITUDE_DEPTH, Math.round(pos.getAltitude() * SEDAPExpressTool.meterToFeet) + "ft");
 				}
 			}
 
 			if (contact.getSpeed() != null && contact.getSpeed() > 1) {
-				pp.setModifier(SymbologyConstants.SPEED,
-						Math.round(contact.getSpeed() * SEDAPExpressTool.metersPerSecondToKnots));
+				pp.setModifier(SymbologyConstants.SPEED, Math.round(contact.getSpeed() * SEDAPExpressTool.metersPerSecondToKnots));
 				pp.setModifier(SymbologyConstants.SPEED_LEADER_SCALE, Math.log10(contact.getSpeed()) / 1.5);
 			} else if (contact.getSpeed() > 0) {
-				pp.setModifier(SymbologyConstants.SPEED,
-						Math.round(contact.getSpeed() * SEDAPExpressTool.metersPerSecondToKnots));
+				pp.setModifier(SymbologyConstants.SPEED, Math.round(contact.getSpeed() * SEDAPExpressTool.metersPerSecondToKnots));
 				pp.setModifier(SymbologyConstants.SPEED_LEADER_SCALE, 1);
 			} else {
 				pp.setModifier(SymbologyConstants.SPEED, null);
@@ -941,11 +980,9 @@ public class SEDAPExpressTool extends Application
 
 				// Create new symbol with some default attributes
 				if (contact.getSIDC() != null)
-					pp = new MilStd2525TacticalSymbol(String.valueOf(contact.getSIDC()),
-							Position.fromDegrees(0.0, 0.0, 0.0));
+					pp = new MilStd2525TacticalSymbol(String.valueOf(contact.getSIDC()), Position.fromDegrees(0.0, 0.0, 0.0));
 				else
-					pp = new MilStd2525TacticalSymbol(SEDAPExpressTool.standardSIDC,
-							Position.fromDegrees(0.0, 0.0, 0.0));
+					pp = new MilStd2525TacticalSymbol(SEDAPExpressTool.standardSIDC, Position.fromDegrees(0.0, 0.0, 0.0));
 				pp.setAltitudeMode(WorldWind.ABSOLUTE);
 				pp.setShowLocation(false);
 				pp.setShowGraphicModifiers(true);
@@ -977,8 +1014,7 @@ public class SEDAPExpressTool extends Application
 			if (contact.getSIDC() != null)
 				pp.setIdentifier(String.valueOf(contact.getSIDC()));
 
-			pp.setModifier(SymbologyConstants.DATE_TIME_GROUP,
-					SEDAPExpressTool.sdf.format(contact.getTime()).toUpperCase());
+			pp.setModifier(SymbologyConstants.DATE_TIME_GROUP, SEDAPExpressTool.sdf.format(contact.getTime()).toUpperCase());
 
 			Position pos;
 			if (contact.getAltitude() != null)
@@ -989,20 +1025,16 @@ public class SEDAPExpressTool extends Application
 
 			if ((pos.getLatitude().getDegrees() >= 0) && (pos.getLongitude().getDegrees() >= 0)) {
 				pp.setModifier(SymbologyConstants.HIGHER_FORMATION,
-						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "N"
-								+ (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "E");
+						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "N" + (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "E");
 			} else if ((pos.getLatitude().getDegrees() >= 0) && (pos.getLongitude().getDegrees() < 0)) {
 				pp.setModifier(SymbologyConstants.HIGHER_FORMATION,
-						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "N"
-								+ (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "W");
+						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "N" + (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "W");
 			} else if ((pos.getLatitude().getDegrees() < 0) && (pos.getLongitude().getDegrees() >= 0)) {
 				pp.setModifier(SymbologyConstants.HIGHER_FORMATION,
-						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "S"
-								+ (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "E");
+						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "S" + (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "E");
 			} else {
 				pp.setModifier(SymbologyConstants.HIGHER_FORMATION,
-						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "S"
-								+ (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "W");
+						(Math.round(pos.getLatitude().getDegrees() * 100d) / 100d) + "S" + (Math.round(pos.getLongitude().getDegrees() * 100d) / 100d) + "W");
 			}
 
 			if (contact.getAltitude() != null) {
@@ -1011,21 +1043,17 @@ public class SEDAPExpressTool extends Application
 				} else if (Math.round(pos.getAltitude()) == 0) {
 					pp.setModifier(SymbologyConstants.ALTITUDE_DEPTH, null);
 				} else if (pos.getAltitude() > 500) {
-					pp.setModifier(SymbologyConstants.ALTITUDE_DEPTH,
-							Math.round((pos.getAltitude() / 100d) * SEDAPExpressTool.meterToFeet) + "hft");
+					pp.setModifier(SymbologyConstants.ALTITUDE_DEPTH, Math.round((pos.getAltitude() / 100d) * SEDAPExpressTool.meterToFeet) + "hft");
 				} else {
-					pp.setModifier(SymbologyConstants.ALTITUDE_DEPTH,
-							Math.round(pos.getAltitude() * SEDAPExpressTool.meterToFeet) + "ft");
+					pp.setModifier(SymbologyConstants.ALTITUDE_DEPTH, Math.round(pos.getAltitude() * SEDAPExpressTool.meterToFeet) + "ft");
 				}
 			}
 
 			if (contact.getSpeed() != null && contact.getSpeed() > 1) {
-				pp.setModifier(SymbologyConstants.SPEED,
-						Math.round(contact.getSpeed() * SEDAPExpressTool.metersPerSecondToKnots));
+				pp.setModifier(SymbologyConstants.SPEED, Math.round(contact.getSpeed() * SEDAPExpressTool.metersPerSecondToKnots));
 				pp.setModifier(SymbologyConstants.SPEED_LEADER_SCALE, Math.log10(contact.getSpeed()) / 1.5);
 			} else if (contact.getSpeed() > 0) {
-				pp.setModifier(SymbologyConstants.SPEED,
-						Math.round(contact.getSpeed() * SEDAPExpressTool.metersPerSecondToKnots));
+				pp.setModifier(SymbologyConstants.SPEED, Math.round(contact.getSpeed() * SEDAPExpressTool.metersPerSecondToKnots));
 				pp.setModifier(SymbologyConstants.SPEED_LEADER_SCALE, 1);
 			} else {
 				pp.setModifier(SymbologyConstants.SPEED, null);
@@ -1035,8 +1063,7 @@ public class SEDAPExpressTool extends Application
 			if (contact.getCourse() != null)
 				pp.setModifier(SymbologyConstants.DIRECTION_OF_MOVEMENT, Angle.fromDegrees(contact.getCourse()));
 
-			if (contact.getMMSI() != null && !contact.getMMSI().isBlank() && contact.getICAO() != null
-					&& !contact.getICAO().isBlank()) {
+			if (contact.getMMSI() != null && !contact.getMMSI().isBlank() && contact.getICAO() != null && !contact.getICAO().isBlank()) {
 				pp.setModifier(SymbologyConstants.IFF_SIF, contact.getMMSI() + "/" + contact.getICAO());
 			} else if (contact.getMMSI() != null && !contact.getMMSI().isBlank()) {
 				pp.setModifier(SymbologyConstants.IFF_SIF, contact.getMMSI());
@@ -1076,8 +1103,7 @@ public class SEDAPExpressTool extends Application
 	public void start(Stage primaryStage) throws Exception {
 
 		try {
-			FXMLLoader loader = new FXMLLoader(
-					getClass().getResource("/de/bundeswehr/sedap/express/tool/SEDAPExpressTool.fxml"));
+			FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/bundeswehr/sedap/express/tool/SEDAPExpressTool.fxml"));
 
 			Parent root = loader.load();
 			Scene scene = new Scene(root);

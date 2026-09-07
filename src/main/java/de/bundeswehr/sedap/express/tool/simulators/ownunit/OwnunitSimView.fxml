@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<BorderPane xmlns="http://javafx.com/javafx/26.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane xmlns="http://javafx.com/javafx/26.0.2" xmlns:fx="http://javafx.com/fxml/1">
    <center>
       <GridPane hgap="5.0" vgap="5.0" BorderPane.alignment="CENTER">
          <columnConstraints>
@@ -33,6 +33,7 @@
             <RowConstraints vgrow="NEVER" />
             <RowConstraints maxHeight="20.0" minHeight="20.0" prefHeight="20.0" vgrow="NEVER" />
             <RowConstraints vgrow="NEVER" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
             <RowConstraints vgrow="NEVER" />
             <RowConstraints valignment="TOP" vgrow="ALWAYS" />
          </rowConstraints>
@@ -46,7 +47,7 @@
 
             <TextField fx:id="latTextField" prefColumnCount="8" GridPane.columnIndex="1" GridPane.rowIndex="2" />
             <Label text="Kinetics" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-            <HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnSpan="4" GridPane.rowIndex="7">
+            <HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnSpan="4" GridPane.rowIndex="8">
                <children>
                   <Label maxWidth="1.7976931348623157E308" text="Mode:" />
                   <RadioButton fx:id="staticToggleButton" selected="true" text="Static">
@@ -64,7 +65,7 @@
             <TextField fx:id="spdTextField" prefColumnCount="8" GridPane.columnIndex="4" GridPane.rowIndex="3" />
             <TextField fx:id="crsTextField" prefColumnCount="8" GridPane.columnIndex="4" GridPane.rowIndex="2" />
             <CheckBox fx:id="hdgCrsCheckBox" selected="true" text="HDG=CRS" GridPane.columnIndex="5" GridPane.rowIndex="4" />
-            <ComboBox fx:id="spdUnitChooseBox" GridPane.columnIndex="5" GridPane.rowIndex="3" />
+            <ComboBox fx:id="spdUnitChooseBox" maxWidth="1.7976931348623157E308" GridPane.columnIndex="5" GridPane.rowIndex="3" />
             <GridPane>
                <columnConstraints>
                   <ColumnConstraints />
@@ -81,11 +82,15 @@
                   <ComboBox fx:id="presetComboBox" maxWidth="250.0" prefWidth="250.0" />
                </children>
             </HBox>
-            <ToggleButton fx:id="simToggleButton" onAction="#simToggleButtonAction" text="Start simulation" GridPane.rowIndex="8" />
+            <ToggleButton fx:id="simToggleButton" onAction="#simToggleButtonAction" text="Start simulation" GridPane.rowIndex="9" />
             <Label layoutX="10.0" layoutY="127.0" text="Name:" GridPane.rowIndex="6" />
             <TextField fx:id="nameTextField" prefColumnCount="8" text="SimOwnUnit" GridPane.columnIndex="1" GridPane.rowIndex="6" />
             <Label text="SIDC:" GridPane.columnIndex="3" GridPane.rowIndex="6" />
             <TextField fx:id="sidcTextField" prefColumnCount="8" text="SFGPEV---------" GridPane.columnIndex="4" GridPane.rowIndex="6" />
+            <Label text="Command ID:" GridPane.rowIndex="7" />
+            <TextField fx:id="commandIDTextField" prefColumnCount="8" text="AAAA" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+            <Label text="Command state:" GridPane.columnIndex="3" GridPane.rowIndex="7" />
+            <ComboBox fx:id="commandStateComboBox" maxWidth="1.7976931348623157E308" GridPane.columnIndex="4" GridPane.columnSpan="2" GridPane.rowIndex="7" />
          </children>
       </GridPane>
    </center>

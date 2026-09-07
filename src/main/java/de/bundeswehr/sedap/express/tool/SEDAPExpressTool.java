@@ -1108,7 +1108,7 @@ public class SEDAPExpressTool extends Application implements SEDAPExpressSubscri
 			Parent root = loader.load();
 			Scene scene = new Scene(root);
 
-			primaryStage.setTitle("SEDAP-Express Tool v1.0.1 - (C)2024-2026, Federal Armed Forces of Germany");
+			primaryStage.setTitle("SEDAP-Express Tool v1.0.2 - (C)2024-2026, Federal Armed Forces of Germany");
 			primaryStage.setScene(scene);
 			primaryStage.show();
 

@@ -313,7 +313,8 @@ public class OwnunitSimController {
 			ownunitMessage.setMAC(null);
 
 			ownunitMessage.setName(!this.nameTextField.getText().isBlank() ? this.nameTextField.getText() : "SimOwnunit");
-			ownunitMessage.setSIDC((this.sidcTextField.getText().isBlank() || this.sidcTextField.getText().length() != 15 ? "SFGPEV---------" : this.sidcTextField.getText()).toCharArray());
+			ownunitMessage
+					.setSIDC((this.sidcTextField.getText().isBlank() || this.sidcTextField.getText().length() != 15 ? "SFGPEV---------" : this.sidcTextField.getText().toUpperCase()).toCharArray());
 
 			ownunitMessage.setPitch(0.0);
 			ownunitMessage.setRoll(0.0);
@@ -391,7 +392,6 @@ public class OwnunitSimController {
 			statusMessage.setBatteryLevelNames(List.of("MainAkku"));
 			statusMessage.setBatteryLevels(List.of(40.4));
 
-
 			statusMessage.setHostname("sim.uniity");
 			statusMessage.setMediaUrls(List.of("http://sim.uniity/stream1"));
 			statusMessage.setTecState(TechnicalState.Operational);
@@ -405,7 +405,7 @@ public class OwnunitSimController {
 
 					statusMessage.setCmdId(Integer.parseInt(commandIDTextField.getText(), 16));
 					statusMessage.setCmdState(commandStateComboBox.getValue());
-					
+
 					statusMessage.setTime(System.currentTimeMillis());
 					statusMessage.setNumber(messageCounter++);
 					if (messageCounter == 0x7f)

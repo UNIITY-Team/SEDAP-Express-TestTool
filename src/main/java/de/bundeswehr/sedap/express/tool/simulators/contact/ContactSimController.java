@@ -229,7 +229,8 @@ public class ContactSimController {
 
 			contactMessage.setContactID(this.idTextField.getText());
 			contactMessage.setName(!this.nameTextField.getText().isBlank() ? this.nameTextField.getText() : "SimTrack");
-			contactMessage.setSIDC(this.sidcTextField.getText().toCharArray());
+			contactMessage
+					.setSIDC((this.sidcTextField.getText().isBlank() || this.sidcTextField.getText().length() != 15 ? "SFSPCLFF-------" : this.sidcTextField.getText().toUpperCase()).toCharArray());
 
 			contactMessage.setPitch(0.0);
 			contactMessage.setRoll(0.0);

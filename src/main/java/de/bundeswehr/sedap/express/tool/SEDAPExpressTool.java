@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.net.NetworkInterface;
 import java.text.SimpleDateFormat;
 import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
@@ -107,7 +108,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -740,13 +740,8 @@ public class SEDAPExpressTool extends Application implements SEDAPExpressSubscri
 	@FXML
 	void mqttClientConnect(ActionEvent event) {
 
-		try {
-			this.communicator = new SEDAPExpressMQTTClient(this.mqttClientURLTextField.getText(), "SEDAPExpressTestTool", this.mqttUserTextField.getText(), this.mqttPasswordTextField.getText(),
-					this.mqttCACertTextField.getText(), this.mqttClientCertTextField.getText(), this.mqttClientKeyTextField.getText());
-		} catch (FileNotFoundException e) {
-
-			e.printStackTrace();
-		}
+		this.communicator = new SEDAPExpressMQTTClient(this.mqttClientURLTextField.getText(), "SEDAPExpressTestTool", this.mqttUserTextField.getText(), this.mqttPasswordTextField.getText(),
+				this.mqttCACertTextField.getText(), this.mqttClientCertTextField.getText(), this.mqttClientKeyTextField.getText(), new LinkedList<>(), "SEDAP-X");
 
 		this.communicator.subscribeForInputLogging(this);
 		this.communicator.subscribeForOutputLogging(this);
